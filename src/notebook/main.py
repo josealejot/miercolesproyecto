@@ -8,12 +8,12 @@ BASE = Path(__file__).resolve().parent
 def buscar_codigo():
     """Devuelve la carpeta que contiene todas las carpetas de código."""
     candidatas = [BASE, BASE / "notebook", BASE / "src" / "notebook", BASE / "src"]
-    carpetas = ("simulacion", "exportacion", "limpieza")
+    carpetas = ("simulacion", "exportacion", "limpieza", "consultas", "graficacion")
     for carpeta in candidatas:
         if all((carpeta / n).is_dir() for n in carpetas):
             return carpeta
     raise FileNotFoundError(
-        "No encontré las carpetas simulacion/, exportacion/ y limpieza/. Busqué en:\n  "
+        "No encontré las carpetas simulacion/, exportacion/, limpieza/, consultas/ y graficacion/. Busqué en:\n  "
         + "\n  ".join(str(c) for c in candidatas)
     )
 
@@ -34,12 +34,15 @@ CODIGO = buscar_codigo()
 RAIZ = buscar_raiz()
 CARPETA_CRUDO = RAIZ / "data" / "crudo"
 CARPETA_LIMPIO = RAIZ / "data" / "limpio"
+CARPETA_REPORTES = RAIZ / "reportes"
 
 sys.path.insert(0, str(CODIGO))
 
 from simulacion.simular import generar_categorias
 from exportacion.exportar import exportar
 from limpieza.limpiar_categorias import limpiar_categorias
+from consultas.consultar_categorias import ejecutar_consultas
+from graficacion.reporte_categorias import generar_reporte
 
 
 def main():
@@ -71,10 +74,17 @@ def main():
     print(f"\ncategorias_limpio.csv | shape={df_limpio.shape} | creado={salida.exists()}")
     print(f"categorias_catalogo.csv | creado={catalogo.exists()}")
 
+    # 4. Consultas (HU Q01): lee el CSV limpio y guarda categorias_consulta_N.csv
+    print("\n=== 4. Consultas ===")
+    ejecutar_consultas(salida, CARPETA_LIMPIO)
+
+    # 5. Gráficas y conclusiones (HU G01): lee el CSV limpio y guarda PNG en reportes/
+    print("\n=== 5. Gráficas ===")
+    generar_reporte(salida, CARPETA_REPORTES)
+
 
 if __name__ == "__main__":
     try:
         main()
     except Exception:
         traceback.print_exc()
-
